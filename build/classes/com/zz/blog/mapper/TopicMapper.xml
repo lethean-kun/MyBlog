@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zz.blog.mapper.TopicMapper">
+	<resultMap id="BaseResultMap" type="com.zz.blog.po.Topic">
+		<id column="topicid" property="topicid" jdbcType="INTEGER" />
+		<result column="title" property="title" jdbcType="VARCHAR" />
+		<result column="contents" property="contents" jdbcType="VARCHAR" />
+		<result column="views" property="views" jdbcType="INTEGER" />
+		<result column="replys" property="replys" jdbcType="INTEGER" />
+		<result column="addTime" property="addtime" jdbcType="TIMESTAMP" />
+		<result column="userid" property="userid" jdbcType="INTEGER" />
+
+
+		<association property="user" javaType="com.zz.blog.po.User">
+			<!-- id：关联查询用户的唯 一标识 column：指定唯 一标识用户信息的列 javaType：映射到user的哪个属性 -->
+			<id column="userid" property="userid" />
+			<result column="username" property="username" />
+			<result column="qq" property="qq" />
+			<result column="email" property="email" />
+
+		</association>
+
+
+
+	</resultMap>
+	
+	<resultMap id="TopicResultMap" type="com.zz.blog.po.Topic" extends="BaseResultMap">
+		<!-- collection：对关联查询到多条记录映射到集合对象中 property：将关联查询到多条记录映射到com.zz.blog.po.Topic哪个属性 
+			ofType：指定映射到list集合属性中pojo的类型 -->
+		<collection property="reply" ofType="com.zz.blog.po.Reply">
+			<!-- id：订单明细唯 一标识 property:要将订单明细的唯 一标识 映射到com.zz.blog.po.Reply的哪个属性 -->
+			<id column="replyid" property="replyid" />
+			<result column="topicid" property="topicid" />
+			<result column="content" property="content" />
+			<result column="replytime" property="replytime" />
+			<result column="ruserid" property="userid" />
+			
+			<association property="user" javaType="com.zz.blog.po.User">
+			<!-- id：关联查询用户的唯 一标识 column：指定唯 一标识用户信息的列 javaType：映射到user的哪个属性 -->
+			<id column="rid" property="userid" />
+			<result column="rname" property="username" />
+			<result column="head_Pic" property="headPic" />
+
+			</association>
+			
+		</collection>		
+		
+	</resultMap>
+	<sql id="Example_Where_Clause">
+		<where>
+			<foreach collection="oredCriteria" item="criteria" separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value} and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Update_By_Example_Where_Clause">
+		<where>
+			<foreach collection="example.oredCriteria" item="criteria"
+				separator="or">
+				<if test="criteria.valid">
+					<trim prefix="(" suffix=")" prefixOverrides="and">
+						<foreach collection="criteria.criteria" item="criterion">
+							<choose>
+								<when test="criterion.noValue">
+									and ${criterion.condition}
+								</when>
+								<when test="criterion.singleValue">
+									and ${criterion.condition} #{criterion.value}
+								</when>
+								<when test="criterion.betweenValue">
+									and ${criterion.condition} #{criterion.value} and
+									#{criterion.secondValue}
+								</when>
+								<when test="criterion.listValue">
+									and ${criterion.condition}
+									<foreach collection="criterion.value" item="listItem"
+										open="(" close=")" separator=",">
+										#{listItem}
+									</foreach>
+								</when>
+							</choose>
+						</foreach>
+					</trim>
+				</if>
+			</foreach>
+		</where>
+	</sql>
+	<sql id="Base_Column_List">
+		topicid, title, contents, views, replys, addTime, topic.userid
+	</sql>
+	<select id="selectByExample" resultMap="BaseResultMap"
+		parameterType="com.zz.blog.po.TopicExample">
+		select
+		<if test="distinct">
+			distinct
+		</if>
+		<include refid="Base_Column_List" />
+		from topic
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+		<if test="orderByClause != null">
+			order by ${orderByClause}
+		</if>
+	</select>
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.Integer">
+		select
+		<include refid="Base_Column_List" />
+		from topic
+		where topicid = #{topicid,jdbcType=INTEGER}
+	</select>
+
+	<select id="selectByUser" resultMap="TopicResultMap"
+		parameterType="com.zz.blog.po.User">
+		select
+		topic.topicid, title, contents, views, replys, addTime, topic.userid,user.username,user.qq,user.email,reply.content,reply.userid rid,a.username rname,a.head_Pic
+		FROM
+		topic
+		LEFT JOIN user ON topic.userid=user.userid
+		LEFT JOIN reply ON topic.topicid=reply.topicid
+		LEFT JOIN user a ON reply.userid=a.userid
+		where topic.userid = #{userid,jdbcType=INTEGER}
+		order by addTime desc
+	</select>
+
+
+	<select id="findAllTopic" resultMap="TopicResultMap">
+		select
+		topic.topicid, title, contents, views, replys, addTime, topic.userid,user.username,user.qq,user.email,reply.content,reply.userid rid,a.username rname,a.head_Pic
+		FROM
+		topic
+		LEFT JOIN user ON topic.userid=user.userid
+		LEFT JOIN reply ON topic.topicid=reply.topicid
+		LEFT JOIN user a ON reply.userid=a.userid
+		order by addTime desc
+	</select>
+	<update id="updateByReply" parameterType="java.lang.Integer">
+		UPDATE topic 
+		set replys=replys+1
+		WHERE topicid=#{topicid,jdbcType=INTEGER}
+	</update>
+
+
+
+
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+		delete from topic
+		where topicid = #{topicid,jdbcType=INTEGER}
+	</delete>
+	<delete id="deleteByExample" parameterType="com.zz.blog.po.TopicExample">
+		delete from topic
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</delete>
+	<insert id="insert" parameterType="com.zz.blog.po.Topic">
+		insert into topic (title, contents,
+		views, replys, addTime,
+		userid)
+		values (#{title,jdbcType=VARCHAR},
+		#{contents,jdbcType=VARCHAR},
+		#{views,jdbcType=INTEGER}, #{replys,jdbcType=INTEGER}, #{addtime,jdbcType=TIMESTAMP},
+		#{userid,jdbcType=INTEGER})
+	</insert>
+	<insert id="insertSelective" parameterType="com.zz.blog.po.Topic">
+		insert into topic
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="topicid != null">
+				topicid,
+			</if>
+			<if test="title != null">
+				title,
+			</if>
+			<if test="contents != null">
+				contents,
+			</if>
+			<if test="views != null">
+				views,
+			</if>
+			<if test="replys != null">
+				replys,
+			</if>
+			<if test="addtime != null">
+				addTime,
+			</if>
+			<if test="userid != null">
+				userid,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="topicid != null">
+				#{topicid,jdbcType=INTEGER},
+			</if>
+			<if test="title != null">
+				#{title,jdbcType=VARCHAR},
+			</if>
+			<if test="contents != null">
+				#{contents,jdbcType=VARCHAR},
+			</if>
+			<if test="views != null">
+				#{views,jdbcType=INTEGER},
+			</if>
+			<if test="replys != null">
+				#{replys,jdbcType=INTEGER},
+			</if>
+			<if test="addtime != null">
+				#{addtime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="userid != null">
+				#{userid,jdbcType=INTEGER},
+			</if>
+		</trim>
+	</insert>
+	<select id="countByExample" parameterType="com.zz.blog.po.TopicExample"
+		resultType="java.lang.Integer">
+		select count(*) from topic
+		<if test="_parameter != null">
+			<include refid="Example_Where_Clause" />
+		</if>
+	</select>
+	<update id="updateByExampleSelective" parameterType="map">
+		update topic
+		<set>
+			<if test="record.topicid != null">
+				topicid = #{record.topicid,jdbcType=INTEGER},
+			</if>
+			<if test="record.title != null">
+				title = #{record.title,jdbcType=VARCHAR},
+			</if>
+			<if test="record.contents != null">
+				contents = #{record.contents,jdbcType=VARCHAR},
+			</if>
+			<if test="record.views != null">
+				views = #{record.views,jdbcType=INTEGER},
+			</if>
+			<if test="record.replys != null">
+				replys = #{record.replys,jdbcType=INTEGER},
+			</if>
+			<if test="record.addtime != null">
+				addTime = #{record.addtime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="record.userid != null">
+				userid = #{record.userid,jdbcType=INTEGER},
+			</if>
+		</set>
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByExample" parameterType="map">
+		update topic
+		set topicid = #{record.topicid,jdbcType=INTEGER},
+		title = #{record.title,jdbcType=VARCHAR},
+		contents = #{record.contents,jdbcType=VARCHAR},
+		views = #{record.views,jdbcType=INTEGER},
+		replys = #{record.replys,jdbcType=INTEGER},
+		addTime = #{record.addtime,jdbcType=TIMESTAMP},
+		userid = #{record.userid,jdbcType=INTEGER}
+		<if test="_parameter != null">
+			<include refid="Update_By_Example_Where_Clause" />
+		</if>
+	</update>
+	<update id="updateByPrimaryKeySelective" parameterType="com.zz.blog.po.Topic">
+		update topic
+		<set>
+			<if test="title != null">
+				title = #{title,jdbcType=VARCHAR},
+			</if>
+			<if test="contents != null">
+				contents = #{contents,jdbcType=VARCHAR},
+			</if>
+			<if test="views != null">
+				views = #{views,jdbcType=INTEGER},
+			</if>
+			<if test="replys != null">
+				replys = #{replys,jdbcType=INTEGER},
+			</if>
+			<if test="addtime != null">
+				addTime = #{addtime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="userid != null">
+				userid = #{userid,jdbcType=INTEGER},
+			</if>
+		</set>
+		where topicid = #{topicid,jdbcType=INTEGER}
+	</update>
+	<update id="updateByPrimaryKey" parameterType="com.zz.blog.po.Topic">
+		update topic
+		set title = #{title,jdbcType=VARCHAR},
+		contents = #{contents,jdbcType=VARCHAR},
+		views = #{views,jdbcType=INTEGER},
+		replys = #{replys,jdbcType=INTEGER},
+		addTime = #{addtime,jdbcType=TIMESTAMP},
+		userid = #{userid,jdbcType=INTEGER}
+		where topicid = #{topicid,jdbcType=INTEGER}
+	</update>
+</mapper>
